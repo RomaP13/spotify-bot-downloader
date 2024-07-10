@@ -18,11 +18,9 @@ def get_token() -> str:
     url = "https://accounts.spotify.com/api/token"
     headers = {
         "Authorization": "Basic " + auth_base64,
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
     }
-    data = {
-        "grant_type": "client_credentials"
-    }
+    data = {"grant_type": "client_credentials"}
 
     result = requests.post(url, headers=headers, data=data)
     json_result = json.loads(result.content)
@@ -32,9 +30,7 @@ def get_token() -> str:
 
 
 def get_auth_header(token: str):
-    return {
-        "Authorization": "Bearer " + token
-    }
+    return {"Authorization": "Bearer " + token}
 
 
 def get_track_id_by_url(track_url: str):
@@ -46,4 +42,24 @@ def get_track_info(token: str, track_id: str):
     headers = get_auth_header(token)
     result = requests.get(url, headers=headers)
     json_result = json.loads(result.content)
-    return json_result
+
+    track_info = {
+        "title": json_result["name"],
+        "album": json_result["album"]["name"],
+        "artists": ", ".join(artist["name"] for artist in json_result["artists"]),
+        "cover_url": json_result["album"]["images"][0]["url"],
+    }
+
+    return track_info
+
+
+def download_cover_image(url: str, output_path: str) -> str | None:
+    try:
+        response = requests.get(url)
+        with open(output_path, "wb") as file:
+            file.write(response.content)
+        return output_path
+    except requests.RequestException as e:
+        print(f"ERROR: {e}")
+
+    return None
