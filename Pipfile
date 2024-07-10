@@ -9,6 +9,8 @@ requests = "*"
 fastapi = "*"
 uvicorn = "*"
 aiogram = "*"
+eyed3 = "*"
+yt-dlp = "*"
 
 [dev-packages]
 types-requests = "*"
