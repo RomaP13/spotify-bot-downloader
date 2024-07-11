@@ -1,10 +1,9 @@
 import logging
-import os
 
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import Command
-from dotenv import load_dotenv
 
+from config import TELEGRAM_BOT_TOKEN
 from utils.spotify_utils import (
     download_cover_image,
     get_token,
@@ -17,13 +16,7 @@ from utils.youtube_utils import (
     get_track_from_youtube,
 )
 
-load_dotenv(override=True)
-CLIENT_ID = os.getenv("CLIENT_ID")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-assert TELEGRAM_BOT_TOKEN is not None
-
-bot = Bot(token=TELEGRAM_BOT_TOKEN)
+bot = Bot(token=TELEGRAM_BOT_TOKEN)  # type: ignore
 dp = Dispatcher()
 
 # Set up logging
@@ -33,7 +26,8 @@ logger = logging.getLogger(__name__)
 
 @dp.message(Command("start"))
 async def start(message: types.Message) -> None:
-    logger.info(f"Received /start command from {message.from_user.id}")
+    if message.from_user:
+        logger.info(f"Received /start command from {message.from_user.id}")
     await message.answer(
         "Hello, send me a Spotify track URL, and I'll provide track info."
     )
@@ -41,8 +35,12 @@ async def start(message: types.Message) -> None:
 
 @dp.message(F.text.startswith("https://open.spotify.com/track/"))
 async def handle_spotify_url(message: types.Message) -> None:
-    logger.info(f"Received Spotify URL from {message.from_user.id}: {message.text}")
-    track_url = message.text.strip()
+    if message.from_user:
+        logger.info(
+            f"Received Spotify URL from {message.from_user.id}: {message.text}"
+        )
+
+    track_url = message.text.strip()  # type: ignore
     token = get_token()
     track_id = get_track_id_by_url(track_url)
     track_info = get_track_info(token, track_id)
