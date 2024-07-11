@@ -62,6 +62,12 @@ def add_metadata_to_track(file_path: str, track_info: dict, cover_path: str):
     audiofile.tag.title = track_info["title"]
     audiofile.tag.artist = track_info["artists"]
     audiofile.tag.album = track_info["album"]
+    audiofile.tag.release_date = track_info["release_date"]
+    audiofile.tag.genre = track_info["genres"]
+    audiofile.tag.track_num = (
+        track_info["track_number"],
+        track_info["total_tracks"],
+    )
 
     with open(cover_path, "rb") as image_file:
         imagedata = image_file.read()

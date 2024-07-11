@@ -4,6 +4,16 @@ import json
 import requests
 
 from config import CLIENT_ID, CLIENT_SECRET
+from utils.spotify_track_extractor import (
+    get_album,
+    get_artists,
+    get_cover_url,
+    get_genres,
+    get_release_date,
+    get_title,
+    get_total_tracks,
+    get_track_number,
+)
 
 
 def get_token() -> str:
@@ -73,15 +83,27 @@ def get_track_info(token: str, track_id: str) -> dict:
     result = requests.get(url, headers=headers)
     json_result = json.loads(result.content)
 
+    title = get_title(json_result)
+    album = get_album(json_result)
+    artists = get_artists(json_result)
+    release_date = get_release_date(json_result)
+    genres = get_genres(json_result)
+    cover_url = get_cover_url(json_result)
+    track_number = get_track_number(json_result)
+    total_tracks = get_total_tracks(json_result)
+
     track_info = {
-        "title": json_result["name"],
-        "album": json_result["album"]["name"],
-        "artists": ", ".join(artist["name"] for artist in json_result["artists"]),
-        "cover_url": json_result["album"]["images"][0]["url"],
+        "title": title,
+        "album": album,
+        "artists": artists,
+        "release_date": release_date,
+        "genres": genres,
+        "cover_url": cover_url,
+        "track_number": track_number,
+        "total_tracks": total_tracks,
     }
 
     return track_info
-
 
 
 def download_cover_image(url: str, output_path: str) -> str | None:
