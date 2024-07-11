@@ -53,7 +53,11 @@ async def handle_spotify_url(message: types.Message) -> None:
 
         # Download the cover image
         cover_path = f"media/img/{track_title}.jpg"
-        download_cover_image(track_info["cover_url"], cover_path)
+        cover_path = download_cover_image(track_info["cover_url"], cover_path)
+        if cover_path is None:
+            logger.warning(
+                f"Failed to download the track cover for {track_title}"
+            )
 
         # Add metadata to the downloaded track
         add_metadata_to_track(file_path, track_info, cover_path)
@@ -64,7 +68,7 @@ async def handle_spotify_url(message: types.Message) -> None:
     except Exception as e:
         logger.error(f"Error handling Spotify URL: {e}")
         await message.answer(
-            "An error occurred while processing your request. Please try again later."
+            "An error occurred while processing your request. Please try again later."  # noqa: E501
         )
 
 
