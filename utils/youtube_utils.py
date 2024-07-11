@@ -1,25 +1,30 @@
-import yt_dlp
 import logging
-import eyed3
 import os
+from typing import Union
+
+import eyed3
+import yt_dlp
 
 logger = logging.getLogger(__name__)
 
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"  # noqa: E501
 
-def get_track_from_youtube(track_title: str):
+
+def get_track_from_youtube(track_title: str) -> Union[dict, None]:
     ydl_opts = {
         "format": "m4a/bestaudio/best",
         "noplaylist": True,
         "quiet": True,
         "default_search": "ytsearch",
         "max_downloads": 1,
-        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "user_agent": USER_AGENT,
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         results = ydl.extract_info(track_title, download=False)
-        if "entries" in results:
-            return results["entries"][0]
+        if results is not None and isinstance(results, dict):
+            if "entries" in results and isinstance(results["entries"], list):
+                return results["entries"][0]
 
         return results
 
@@ -30,7 +35,7 @@ def download_track(youtube_track: dict, output_path: str) -> str:
         "format": "bestaudio/best",
         "outtmpl": f"{base}.%(ext)s",
         "quiet": True,
-        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "user_agent": USER_AGENT,
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -52,6 +57,7 @@ def download_track(youtube_track: dict, output_path: str) -> str:
 def add_metadata_to_track(file_path: str, track_info: dict, cover_path: str):
     audiofile = eyed3.load(file_path)
     assert audiofile is not None
+    assert audiofile.tag is not None
 
     audiofile.tag.title = track_info["title"]
     audiofile.tag.artist = track_info["artists"]
