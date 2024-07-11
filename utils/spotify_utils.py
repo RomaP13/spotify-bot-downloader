@@ -1,17 +1,19 @@
 import base64
 import json
-import os
 
 import requests
-from dotenv import load_dotenv
 
-load_dotenv()
-CLIENT_ID = os.getenv("CLIENT_ID")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+from config import CLIENT_ID, CLIENT_SECRET
 
 
 def get_token() -> str:
-    auth_string = CLIENT_ID + ":" + CLIENT_SECRET
+    """
+    Obtain an access token from the Spotify API using client credentials.
+
+    Returns:
+        str: Access token.
+    """
+    auth_string = f"{CLIENT_ID}:{CLIENT_SECRET}"
     auth_bytes = auth_string.encode("utf-8")
     auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
 
@@ -29,15 +31,43 @@ def get_token() -> str:
     return token
 
 
-def get_auth_header(token: str):
+def get_auth_header(token: str) -> dict:
+    """
+    Create an authorization header using the given token.
+
+    Args:
+        token (str): Access token.
+
+    Returns:
+        dict: Authorization header.
+    """
     return {"Authorization": "Bearer " + token}
 
 
-def get_track_id_by_url(track_url: str):
+def get_track_id_by_url(track_url: str) -> str:
+    """
+    Extract the track ID from a Spotify track URL.
+
+    Args:
+        track_url (str): Spotify track URL.
+
+    Returns:
+        str: Track ID.
+    """
     return track_url.split("/")[-1].split("?")[0]
 
 
-def get_track_info(token: str, track_id: str):
+def get_track_info(token: str, track_id: str) -> dict:
+    """
+    Retrieve track information from the Spotify API.
+
+    Args:
+        token (str): Access token.
+        track_id (str): Spotify track ID.
+
+    Returns:
+        dict: Dictionary containing track information.
+    """
     url = f"https://api.spotify.com/v1/tracks/{track_id}"
     headers = get_auth_header(token)
     result = requests.get(url, headers=headers)
@@ -53,7 +83,19 @@ def get_track_info(token: str, track_id: str):
     return track_info
 
 
+
 def download_cover_image(url: str, output_path: str) -> str | None:
+    """
+    Download the cover image from a given URL and
+    save it to the specified output path.
+
+    Args:
+        url (str): URL of the cover image.
+        output_path (str): Path where the image will be saved.
+
+    Returns:
+        str | None: Path to the saved image or None if an error occurred.
+    """
     try:
         response = requests.get(url)
         with open(output_path, "wb") as file:
