@@ -1,3 +1,7 @@
+import requests
+import json
+
+
 def get_title(json_result: dict) -> str:
     """
     Extracts the title from the JSON result.
@@ -54,19 +58,24 @@ def get_release_date(json_result: dict) -> str:
     return json_result.get("album", {}).get("release_date", "Unknown")
 
 
-def get_genres(json_result: dict) -> str:
+def get_genres(json_result: dict, headers: dict) -> str:
     """
-    Extracts the genres from the JSON result.
+    Extracts the genres from the artist is associated with.
 
     Args:
         json_result (dict): The JSON result from the Spotify API.
+        headers (dict): Authorization header.
 
     Returns:
         str: A comma-separated string of genres,
         or an empty string if not found.
     """
-    genres = json_result.get("artists", [{}])[0].get("genres", [])
-    return ", ".join(genre for genre in genres)
+    artist_id = json_result["artists"][0]["id"]
+    url = f"https://api.spotify.com/v1/artists/{artist_id}"
+    result = requests.get(url, headers=headers)
+    json_result = json.loads(result.content)
+    genres = json_result.get("genres", "")
+    return ", ".join(genres)
 
 
 def get_cover_url(json_result: dict) -> str:

@@ -87,7 +87,7 @@ def get_track_info(token: str, track_id: str) -> dict:
     album = get_album(json_result)
     artists = get_artists(json_result)
     release_date = get_release_date(json_result)
-    genres = get_genres(json_result)
+    genres = get_genres(json_result, headers)
     cover_url = get_cover_url(json_result)
     track_number = get_track_number(json_result)
     total_tracks = get_total_tracks(json_result)
