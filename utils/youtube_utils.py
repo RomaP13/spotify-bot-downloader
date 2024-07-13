@@ -30,7 +30,9 @@ def get_track_from_youtube(search_query: str) -> Union[dict, None]:
         return results
 
 
-def download_track(youtube_track: dict, output_path: str) -> str:
+async def download_track(
+    youtube_track: dict, output_path: str, max_retries: int = 3, delay: int = 5
+) -> str:
     base, _ = os.path.splitext(output_path)  # Remove any existing extension
     ydl_opts = {
         "format": "bestaudio/best",
@@ -45,12 +47,22 @@ def download_track(youtube_track: dict, output_path: str) -> str:
         ],
     }
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([youtube_track["webpage_url"]])
-    except yt_dlp.utils.DownloadError as e:
-        logger.error(f"Error downloading the track: {e}")
-        raise
+    for attempt in range(max_retries):
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([youtube_track["webpage_url"]])
+            logger.info(f"Download successful on attempt {attempt + 1}")
+            return f"{base}.mp3"
+        except yt_dlp.utils.DownloadError as e:
+            logger.error(f"Error downloading the track: {e}")
+            if attempt < max_retries - 1:
+                logger.info(f"Retrying in {delay} seconds...")
+                await asyncio.sleep(delay)
+            else:
+                logger.error(
+                    f"Failed to download the track after {max_retries} attempts."  # noqa: E501
+                )
+                raise
 
     return f"{base}.mp3"
 
