@@ -16,6 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 async def on_startup():
+    if await bot.delete_webhook(drop_pending_updates=True) is True:
+        logger.info("Webhook integration was removed.")
+    else:
+        logger.info("Webhook integration wasn't removed.")
+
     webhook_info = await bot.get_webhook_info()
     if webhook_info.url != WEBHOOK_URL:
         logger.info(f"Setting webhook URL to {WEBHOOK_URL}")
