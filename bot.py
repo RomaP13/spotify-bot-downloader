@@ -6,7 +6,9 @@ from aiogram.filters import Command
 from config import TELEGRAM_BOT_TOKEN
 from utils.spotify_utils import (
     download_cover_image,
+    get_auth_header,
     get_token,
+    get_track,
     get_track_id_by_url,
     get_track_info,
 )
@@ -34,22 +36,27 @@ async def start(message: types.Message) -> None:
 
 
 @dp.message(F.text.startswith("https://open.spotify.com/track/"))
-async def handle_spotify_url(message: types.Message) -> None:
+async def handle_spotify_track_url(message: types.Message) -> None:
     if message.from_user:
         logger.info(
-            f"Received Spotify URL from {message.from_user.id}: {message.text}"
+            f"Received track Spotify URL from {message.from_user.id}: {message.text}"
         )
 
     track_url = message.text.strip()  # type: ignore
     token = get_token()
+    headers = get_auth_header(token)
     track_id = get_track_id_by_url(track_url)
-    track_info = get_track_info(token, track_id)
+    json_result = get_track(headers, track_id)
+    track_info = get_track_info(headers, json_result)
     track_title = track_info["title"]
+    track_artists = track_info["artists"]
+    logger.info(f"Processing track: {track_title}")
 
     try:
-        youtube_track = get_track_from_youtube(track_title)
+        search_query = f"{track_title} {track_artists}"
+        youtube_track = get_track_from_youtube(search_query)
         output_path = f"media/tracks/{track_title}.mp3"
-        file_path = download_track(youtube_track, output_path)
+        file_path = await download_track(youtube_track, output_path)
 
         # Download the cover image
         cover_path = f"media/img/{track_title}.jpg"
@@ -65,6 +72,7 @@ async def handle_spotify_url(message: types.Message) -> None:
         await message.answer("Downloading track from YouTube...")
         file = types.FSInputFile(file_path)
         await message.answer_audio(file)
+        logger.info("Track was processed.")
     except Exception as e:
         logger.error(f"Error handling Spotify URL: {e}")
         await message.answer(

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from typing import Union
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"  # noqa: E501
 
 
-def get_track_from_youtube(track_title: str) -> Union[dict, None]:
+def get_track_from_youtube(search_query: str) -> Union[dict, None]:
     ydl_opts = {
         "format": "m4a/bestaudio/best",
         "noplaylist": True,
@@ -21,7 +22,7 @@ def get_track_from_youtube(track_title: str) -> Union[dict, None]:
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        results = ydl.extract_info(track_title, download=False)
+        results = ydl.extract_info(search_query, download=False)
         if results is not None and isinstance(results, dict):
             if "entries" in results and isinstance(results["entries"], list):
                 return results["entries"][0]
@@ -54,7 +55,9 @@ def download_track(youtube_track: dict, output_path: str) -> str:
     return f"{base}.mp3"
 
 
-def add_metadata_to_track(file_path: str, track_info: dict, cover_path: str):
+def add_metadata_to_track(
+    file_path: str, track_info: dict, cover_path: str
+):
     audiofile = eyed3.load(file_path)
     assert audiofile is not None
     assert audiofile.tag is not None
