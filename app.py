@@ -1,16 +1,11 @@
 import logging
-import os
 
-import uvicorn
 from aiogram import types
-from dotenv import load_dotenv
 from fastapi import FastAPI, Request
+import uvicorn
 
 from bot import bot, dp
-
-load_dotenv(override=True)
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-NGROK_TUNNEL_URL = os.getenv("NGROK_TUNNEL_URL")
+from config import NGROK_TUNNEL_URL, TELEGRAM_BOT_TOKEN
 
 WEBHOOK_PATH = f"/bot/{TELEGRAM_BOT_TOKEN}"
 WEBHOOK_URL = f"{NGROK_TUNNEL_URL}{WEBHOOK_PATH}"
@@ -21,6 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 async def on_startup():
+    if await bot.delete_webhook(drop_pending_updates=True) is True:
+        logger.info("Webhook integration was removed.")
+    else:
+        logger.info("Webhook integration wasn't removed.")
+
     webhook_info = await bot.get_webhook_info()
     if webhook_info.url != WEBHOOK_URL:
         logger.info(f"Setting webhook URL to {WEBHOOK_URL}")
