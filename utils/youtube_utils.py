@@ -7,6 +7,7 @@ import eyed3
 import yt_dlp
 
 logger = logging.getLogger(__name__)
+eyed3.log.setLevel("ERROR")
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"  # noqa: E501
 
@@ -32,7 +33,7 @@ def get_track_from_youtube(search_query: str) -> Union[dict, None]:
 
 async def download_track(
     youtube_track: dict, output_path: str, max_retries: int = 3, delay: int = 5
-) -> str:
+) -> str | None:
     base, _ = os.path.splitext(output_path)  # Remove any existing extension
     ydl_opts = {
         "format": "bestaudio/best",
@@ -64,12 +65,10 @@ async def download_track(
                 )
                 raise
 
-    return f"{base}.mp3"
+    return None
 
 
-def add_metadata_to_track(
-    file_path: str, track_info: dict, cover_path: str
-):
+def add_metadata_to_track(file_path: str, track_info: dict, cover_path: str):
     audiofile = eyed3.load(file_path)
     assert audiofile is not None
     assert audiofile.tag is not None
@@ -80,10 +79,17 @@ def add_metadata_to_track(
     audiofile.tag.release_date = track_info["release_date"]
     audiofile.tag.genre = track_info["genres"]
     audiofile.tag.track_num = (
-        track_info["track_number"],
-        track_info["total_tracks"],
+        (
+            int(track_info["track_number"])
+            if track_info["track_number"].isdigit()
+            else 0
+        ),
+        (
+            int(track_info["total_tracks"])
+            if track_info["total_tracks"].isdigit()
+            else 0
+        ),
     )
-
     with open(cover_path, "rb") as image_file:
         imagedata = image_file.read()
     audiofile.tag.images.set(3, imagedata, "image/jpeg", "cover")
