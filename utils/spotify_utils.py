@@ -131,6 +131,23 @@ def get_playlist_id_by_url(playlist_url: str) -> str:
     return playlist_url.split("/")[-1].split("?")[0]
 
 
+def get_playlist_title(headers: dict, playlist_id: str) -> str:
+    """
+    Extract the playlist title from a Spotify playlist.
+
+    Args:
+        headers (dict): Authorization header.
+        playlist_id (str): Spotify playlist ID.
+
+    Returns:
+        str: Playlist title.
+    """
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}"
+    result = requests.get(url, headers=headers)
+    json_result = json.loads(result.content)
+    return json_result["name"]
+
+
 def get_playlist_tracks(headers: dict, playlist_id: str) -> list:
     """
     Retrieve tracks information from a Spotify playlist.
