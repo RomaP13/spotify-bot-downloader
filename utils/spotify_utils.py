@@ -160,17 +160,21 @@ def get_playlist_tracks(headers: dict, playlist_id: str) -> list:
         list: List of dictionaries containing track information.
     """
     url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
-    result = requests.get(url, headers=headers)
-    json_result = json.loads(result.content)
-
     tracks = []
-    if "items" not in json_result:
-        return []
 
-    for item in json_result["items"]:
-        track = item["track"]
-        track_info = get_track_info(headers, track)
-        tracks.append(track_info)
+    while url:
+        result = requests.get(url, headers=headers)
+        json_result = result.json()
+
+        if "items" not in json_result:
+            break
+
+        for item in json_result["items"]:
+            track = item["track"]
+            track_info = get_track_info(headers, track)
+            tracks.append(track_info)
+
+        url = json_result.get("next")  # Get the next URL to fetch more tracks
 
     return tracks
 
