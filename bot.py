@@ -20,7 +20,7 @@ from utils.spotify_utils import (
 from utils.youtube_utils import (
     add_metadata_to_track,
     download_track,
-    get_track_from_youtube,
+    search_youtube,
 )
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)  # type: ignore
@@ -59,9 +59,9 @@ async def handle_spotify_track_url(message: types.Message) -> None:
 
     try:
         search_query = f"{track_title} {track_artists}"
-        youtube_track = get_track_from_youtube(search_query)
+        youtube_track = search_youtube(search_query)
         output_path = f"media/tracks/{track_title}.mp3"
-        file_path = await download_track(youtube_track, output_path)
+        file_path = download_track(youtube_track, output_path)
 
         # Download the cover image
         cover_path = f"media/img/{track_title}.jpg"

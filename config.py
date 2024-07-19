@@ -23,3 +23,8 @@ NGROK_TUNNEL_URL = os.getenv("NGROK_TUNNEL_URL")
 assert (
     NGROK_TUNNEL_URL is not None
 ), "NGROK_TUNNEL_URL environment variable is not set"
+
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+assert (
+    YOUTUBE_API_KEY is not None
+), "YOUTUBE_API_KEY environment variable is not set"
