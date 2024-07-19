@@ -1,13 +1,13 @@
 import logging
 import os
-import zipfile
 
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import Command
 
 from config import TELEGRAM_BOT_TOKEN
+from utils.file_utils import create_zip_file, send_file_to_user
+from utils.message_utils import update_progress
 from utils.spotify_utils import (
-    download_cover_image,
     get_auth_header,
     get_playlist_id_by_url,
     get_playlist_title,
@@ -17,11 +17,7 @@ from utils.spotify_utils import (
     get_track_id_by_url,
     get_track_info,
 )
-from utils.youtube_utils import (
-    add_metadata_to_track,
-    download_track,
-    search_youtube,
-)
+from utils.track_processor import process_track
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)  # type: ignore
 dp = Dispatcher()
@@ -44,7 +40,7 @@ async def start(message: types.Message) -> None:
 async def handle_spotify_track_url(message: types.Message) -> None:
     if message.from_user:
         logger.info(
-            f"Received track Spotify URL from {message.from_user.id}: {message.text}"
+            f"Received track Spotify URL from {message.from_user.id}: {message.text}"  # noqa: E501
         )
 
     track_url = message.text.strip()  # type: ignore
@@ -53,36 +49,20 @@ async def handle_spotify_track_url(message: types.Message) -> None:
     track_id = get_track_id_by_url(track_url)
     json_result = get_track(headers, track_id)
     track_info = get_track_info(headers, json_result)
-    track_title = track_info["title"]
-    track_artists = track_info["artists"]
-    logger.info(f"Processing track: {track_title}")
+    track_dir = "media/tracks"
 
-    try:
-        search_query = f"{track_title} {track_artists}"
-        youtube_track = search_youtube(search_query)
-        output_path = f"media/tracks/{track_title}.mp3"
-        file_path = download_track(youtube_track, output_path)
+    bot_message = await message.answer("Starting to process track...")
+    bot_message_id = bot_message.message_id
+    chat_id = bot_message.chat.id
 
-        # Download the cover image
-        cover_path = f"media/img/{track_title}.jpg"
-        cover_path = download_cover_image(track_info["cover_url"], cover_path)
-        if cover_path is None:
-            logger.warning(
-                f"Failed to download the track cover for {track_title}"
-            )
-
-        # Add metadata to the downloaded track
-        add_metadata_to_track(file_path, track_info, cover_path)
-
-        await message.answer("Downloading track from YouTube...")
-        file = types.FSInputFile(file_path)
-        await message.answer_audio(file)
-        logger.info("Track was processed.")
-    except Exception as e:
-        logger.error(f"Error handling Spotify URL: {e}")
-        await message.answer(
-            "An error occurred while processing your request. Please try again later."  # noqa: E501
-        )
+    track_path = process_track(track_info, track_dir)
+    if track_path:
+        await send_file_to_user(message, track_path, "audio")
+        progress_text = "Track was sent."
+    else:
+        progress_text = "Track wasn't found."
+    logger.info(progress_text)
+    await update_progress(bot, progress_text, chat_id, bot_message_id)
 
 
 @dp.message(F.text.startswith("https://open.spotify.com/playlist/"))
@@ -92,7 +72,7 @@ async def handle_spotify_playlist_url(message: types.Message) -> None:
         logger.info(f"Handling message with id: {message_id}")
 
         logger.info(
-            f"Received playlist Spotify URL from {message.from_user.id}: {message.text}"
+            f"Received playlist Spotify URL from {message.from_user.id}: {message.text}"  # noqa: E501
         )
 
     playlist_url = message.text.strip()  # type: ignore
@@ -110,53 +90,43 @@ async def handle_spotify_playlist_url(message: types.Message) -> None:
     tracks_dir = f"media/playlists/{playlist_title}"
     os.makedirs(tracks_dir, exist_ok=True)
 
-    track_files = []
-    for track_info in tracks_info:
-        try:
-            track_title = track_info["title"]
-            track_artists = track_info["artists"]
-            logger.info(f"Processing track: {track_title}")
+    bot_message = await message.answer("Starting to process tracks...")
+    bot_message_id = bot_message.message_id
+    chat_id = bot_message.chat.id
+    total_tracks = len(tracks_info)
 
-            search_query = f"{track_title} {track_artists}"
-            youtube_track = get_track_from_youtube(search_query)
+    for current, track_info in enumerate(tracks_info):
+        progress_text = f"Processing track {current + 1}/{total_tracks}: {track_info['artists']} - {track_info['title']}"  # noqa: E501
+        await update_progress(
+            bot,
+            progress_text,
+            chat_id,
+            bot_message_id,
+        )
+        process_track(track_info, tracks_dir)
 
-            # Download the track
-            track_path = os.path.join(tracks_dir, f"{track_title}.mp3")
-            track_path = await download_track(youtube_track, track_path)
-            track_files.append(track_path)
-
-            # Download the cover image
-            cover_path = f"media/img/{track_title}.jpg"
-            cover_path = download_cover_image(
-                track_info["cover_url"], cover_path
-            )
-            if cover_path is None:
-                logger.warning(
-                    f"Failed to download the track cover for {track_title}"
-                )
-
-            # Add metadata to the downloaded track
-            add_metadata_to_track(track_path, track_info, cover_path)
-
-        except Exception as e:
-            logger.error(f"Failed to download the track: {track_title}")
-            logger.error(f"Error handling Spotify URL: {e}")
+    await update_progress(
+        bot,
+        "Playlist was downloaded. Sending...",
+        chat_id,
+        bot_message_id,
+    )
 
     # Create ZIP file
     zip_path = f"media/playlists/{playlist_title}.zip"
-    with zipfile.ZipFile(zip_path, "w") as zipf:
-        for file in os.listdir(tracks_dir):
-            if file.endswith(".mp3"):
-                zipf.write(
-                    os.path.join(tracks_dir, file),
-                    os.path.join(os.path.basename(tracks_dir), file),
-                )
+    create_zip_file(tracks_dir, zip_path)
 
-    # Send ZIP file
-    file = types.FSInputFile(zip_path)
-    await message.answer_document(file)
+    # Send ZIP file to the user
+    await send_file_to_user(message, zip_path, "document")
 
-    logger.info("All tracks from playlist was processed.")
+    progress_text = "Playlist was sent."
+    logger.info(progress_text)
+    await update_progress(
+        bot,
+        progress_text,
+        chat_id,
+        bot_message_id,
+    )
 
 
 @dp.message()
