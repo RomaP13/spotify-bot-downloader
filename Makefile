@@ -14,7 +14,7 @@ setup:
 .PHONY: clean
 clean:
 	@echo "Cleaning directories..."
-	@rm -rf $(TRACKS_DIR) $(IMG_DIR)
+	@rm -rf $(TRACKS_DIR) $(IMG_DIR) ${PLAYLISTS_DIR}
 	@echo "Directories cleaned."
 
 # Run the Python script to start the bot
