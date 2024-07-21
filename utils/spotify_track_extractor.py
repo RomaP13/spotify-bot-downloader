@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 
 
 def get_title(json_result: dict) -> str:
@@ -27,7 +28,7 @@ def get_artists(json_result: dict) -> str:
         or "Unknown" if not found.
     """
     artists = json_result.get("artists", [])
-    if len(artists) == 0:
+    if not artists:
         return "Unknown"
     return ", ".join(artist["name"] for artist in artists)
 
@@ -70,11 +71,21 @@ def get_genres(json_result: dict, headers: dict) -> str:
         str: A comma-separated string of genres,
         or an empty string if not found.
     """
-    artist_id = json_result["artists"][0]["id"]
-    url = f"https://api.spotify.com/v1/artists/{artist_id}"
+    artists = json_result.get("artists", [])
+    if not artists:
+        return "Unknown"
+
+    artists_id = artists[0].get("id", "")
+    if not artists_id:
+        return "Unknown"
+
+    url = f"https://api.spotify.com/v1/artists/{artists_id}"
     result = requests.get(url, headers=headers)
     json_result = json.loads(result.content)
-    genres = json_result.get("genres", "")
+
+    genres = json_result.get("genres", [])
+    if not genres:
+        return "Unknown"
     return ", ".join(genres)
 
 
@@ -88,7 +99,10 @@ def get_cover_url(json_result: dict) -> str:
     Returns:
         str: The cover URL, or an empty string if not found.
     """
-    return json_result.get("album", {}).get("images", [{}])[0].get("url", "")
+    images = json_result.get("album", {}).get("images", [])
+    if images:
+        return images[0].get("url", "")
+    return ""
 
 
 def get_track_number(json_result: dict) -> str:

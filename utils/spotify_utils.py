@@ -54,6 +54,23 @@ def get_auth_header(token: str) -> dict:
     return {"Authorization": "Bearer " + token}
 
 
+def get_track(headers: dict, track_id: str) -> dict:
+    """
+    Retrieve raw track information from the Spotify API.
+
+    Args:
+        headers (dict): Authorization header.
+        track_id (str): Spotify track ID.
+
+    Returns:
+        dict: Raw JSON result from the Spotify API.
+    """
+    url = f"https://api.spotify.com/v1/tracks/{track_id}"
+    result = requests.get(url, headers=headers)
+    json_result = json.loads(result.content)
+    return json_result
+
+
 def get_track_id_by_url(track_url: str) -> str:
     """
     Extract the track ID from a Spotify track URL.
@@ -67,22 +84,17 @@ def get_track_id_by_url(track_url: str) -> str:
     return track_url.split("/")[-1].split("?")[0]
 
 
-def get_track_info(token: str, track_id: str) -> dict:
+def get_track_info(headers: dict, json_result: dict) -> dict:
     """
-    Retrieve track information from the Spotify API.
+    Retrieve track information from the json_result.
 
     Args:
-        token (str): Access token.
-        track_id (str): Spotify track ID.
+        headers (dict): Authorization header.
+        json_result (dict): The JSON result from the Spotify API.
 
     Returns:
         dict: Dictionary containing track information.
     """
-    url = f"https://api.spotify.com/v1/tracks/{track_id}"
-    headers = get_auth_header(token)
-    result = requests.get(url, headers=headers)
-    json_result = json.loads(result.content)
-
     title = get_title(json_result)
     album = get_album(json_result)
     artists = get_artists(json_result)
@@ -104,6 +116,67 @@ def get_track_info(token: str, track_id: str) -> dict:
     }
 
     return track_info
+
+
+def get_playlist_id_by_url(playlist_url: str) -> str:
+    """
+    Extract the playlist ID from a Spotify playlist URL.
+
+    Args:
+        playlist_url (str): Spotify playlist URL.
+
+    Returns:
+        str: Playlist ID.
+    """
+    return playlist_url.split("/")[-1].split("?")[0]
+
+
+def get_playlist_title(headers: dict, playlist_id: str) -> str:
+    """
+    Extract the playlist title from a Spotify playlist.
+
+    Args:
+        headers (dict): Authorization header.
+        playlist_id (str): Spotify playlist ID.
+
+    Returns:
+        str: Playlist title.
+    """
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}"
+    result = requests.get(url, headers=headers)
+    json_result = json.loads(result.content)
+    return json_result["name"]
+
+
+def get_playlist_tracks(headers: dict, playlist_id: str) -> list:
+    """
+    Retrieve tracks information from a Spotify playlist.
+
+    Args:
+        headers (dict): Authorization header.
+        playlist_id (str): Spotify playlist ID.
+
+    Returns:
+        list: List of dictionaries containing track information.
+    """
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    tracks = []
+
+    while url:
+        result = requests.get(url, headers=headers)
+        json_result = result.json()
+
+        if "items" not in json_result:
+            break
+
+        for item in json_result["items"]:
+            track = item["track"]
+            track_info = get_track_info(headers, track)
+            tracks.append(track_info)
+
+        url = json_result.get("next")  # Get the next URL to fetch more tracks
+
+    return tracks
 
 
 def download_cover_image(url: str, output_path: str) -> str | None:
