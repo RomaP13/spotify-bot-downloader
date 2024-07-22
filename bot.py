@@ -7,12 +7,13 @@ from aiogram.filters import Command
 from config import TELEGRAM_BOT_TOKEN
 from utils.file_utils import create_zip_file, send_file_to_user
 from utils.message_utils import update_progress
-from utils.spotify_utils import (
-    get_auth_header,
+from utils.spotify.auth import get_auth_header, get_token
+from utils.spotify.playlist_utils import (
     get_playlist_id_by_url,
     get_playlist_title,
     get_playlist_tracks,
-    get_token,
+)
+from utils.spotify.track_utils import (
     get_track,
     get_track_id_by_url,
     get_track_info,
