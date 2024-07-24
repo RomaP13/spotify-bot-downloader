@@ -1,12 +1,9 @@
 import logging
 import os
 
+from utils.metadata_utils import add_metadata_to_track
 from utils.spotify.image_utils import download_cover_image
-from utils.youtube_utils import (
-    add_metadata_to_track,
-    download_track,
-    search_youtube,
-)
+from utils.youtube_utils import download_track, search_youtube
 
 logger = logging.getLogger(__name__)
 

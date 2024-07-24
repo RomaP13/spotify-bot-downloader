@@ -2,14 +2,12 @@ import logging
 import os
 from typing import Union
 
-import eyed3
 import requests
 import yt_dlp
 
 from config import YOUTUBE_API_KEY
 
 logger = logging.getLogger(__name__)
-eyed3.log.setLevel("ERROR")
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"  # noqa: E501
 
@@ -70,30 +68,3 @@ def download_track(
                 raise
 
     return None
-
-
-def add_metadata_to_track(file_path: str, track_info: dict, cover_path: str):
-    audiofile = eyed3.load(file_path)
-    assert audiofile is not None
-    assert audiofile.tag is not None
-
-    audiofile.tag.title = track_info["title"]
-    audiofile.tag.artist = track_info["artists"]
-    audiofile.tag.album = track_info["album"]
-    audiofile.tag.release_date = track_info["release_date"]
-    audiofile.tag.genre = track_info["genres"]
-
-    track_number_str = str(track_info["track_number"])
-    total_tracks_str = str(track_info["total_tracks"])
-
-    track_number = int(track_number_str) if track_number_str.isdigit() else 0
-    total_tracks = int(total_tracks_str) if total_tracks_str.isdigit() else 0
-
-    audiofile.tag.track_num = (track_number, total_tracks)
-
-    if cover_path and os.path.exists(cover_path):
-        with open(cover_path, "rb") as image_file:
-            imagedata = image_file.read()
-        audiofile.tag.images.set(3, imagedata, "image/jpeg", "cover")
-
-    audiofile.tag.save()
