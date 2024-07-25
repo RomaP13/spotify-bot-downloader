@@ -13,6 +13,16 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 
 def search_youtube(query: str) -> Union[str, None]:
+    """
+    Searches YouTube for a video based on a query string.
+
+    Args:
+        query (str): The search query string.
+
+    Returns:
+        Union[str, None]: The URL of the first video found,
+        or None if no video found or an error occurs.
+    """
     SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
     VIDEO_URL = "https://www.youtube.com/watch?v="
 
@@ -39,6 +49,19 @@ def search_youtube(query: str) -> Union[str, None]:
 def download_track(
     youtube_track_url: str, output_path: str, max_retries: int = 3
 ) -> str | None:
+    """
+    Downloads the audio track of a YouTube video and saves it as an MP3 file.
+
+    Args:
+        youtube_track_url (str): The URL of the YouTube video to download.
+        output_path (str): The file path to save the downloaded audio track.
+        max_retries (int): The maximum number of retries if
+        the download fails. Defaults to 3.
+
+    Returns:
+        Union[str, None]: The file path of the downloaded MP3 file,
+        or None if the download fails.
+    """
     base, _ = os.path.splitext(output_path)  # Remove any existing extension
     ydl_opts = {
         "format": "bestaudio/best",
