@@ -64,3 +64,24 @@ def get_playlist_tracks(headers: dict, playlist_id: str) -> list:
         url = json_result.get("next")  # Get the next URL to fetch more tracks
 
     return tracks
+
+
+def is_playlist_accessible(headers: dict, playlist_id: str) -> bool:
+    """
+    Check if a Spotify playlist is accessible.
+
+    This function sends a GET request to the Spotify API to check
+    if the playlist with the given playlist_id is accessible.
+    If the response status code is 200, the playlist is accessible;
+    otherwise, it is not.
+
+    Args:
+        headers (dict): Authorization headers.
+        playlist_id (str): The Spotify ID of the playlist to check.
+
+    Returns:
+        bool: True if the playlist is accessible, False otherwise.
+    """
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}"
+    response = requests.get(url, headers=headers)
+    return response.status_code == 200

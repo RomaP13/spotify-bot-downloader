@@ -12,6 +12,7 @@ from utils.spotify.playlist_utils import (
     get_playlist_id_by_url,
     get_playlist_title,
     get_playlist_tracks,
+    is_playlist_accessible,
 )
 from utils.spotify.track_utils import (
     get_track,
@@ -80,6 +81,13 @@ async def handle_spotify_playlist_url(message: types.Message) -> None:
     token = get_token()
     headers = get_auth_header(token)
     playlist_id = get_playlist_id_by_url(playlist_url)
+
+    # Check if the playlist is not private
+    if not is_playlist_accessible(headers, playlist_id):
+        logger.info(f"Received private playlist with id: {playlist_id}")
+        await message.answer("The playlist is private or inaccessible.")
+        return
+
     playlist_title = get_playlist_title(headers, playlist_id)
     tracks_info = get_playlist_tracks(headers, playlist_id)
     if len(tracks_info) == 0:
