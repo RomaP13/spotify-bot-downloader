@@ -2,19 +2,27 @@ import logging
 import os
 from typing import Union
 
-import eyed3
 import requests
 import yt_dlp
 
 from config import YOUTUBE_API_KEY
 
 logger = logging.getLogger(__name__)
-eyed3.log.setLevel("ERROR")
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"  # noqa: E501
 
 
 def search_youtube(query: str) -> Union[str, None]:
+    """
+    Searches YouTube for a video based on a query string.
+
+    Args:
+        query (str): The search query string.
+
+    Returns:
+        Union[str, None]: The URL of the first video found,
+        or None if no video found or an error occurs.
+    """
     SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
     VIDEO_URL = "https://www.youtube.com/watch?v="
 
@@ -41,6 +49,19 @@ def search_youtube(query: str) -> Union[str, None]:
 def download_track(
     youtube_track_url: str, output_path: str, max_retries: int = 3
 ) -> str | None:
+    """
+    Downloads the audio track of a YouTube video and saves it as an MP3 file.
+
+    Args:
+        youtube_track_url (str): The URL of the YouTube video to download.
+        output_path (str): The file path to save the downloaded audio track.
+        max_retries (int): The maximum number of retries if
+        the download fails. Defaults to 3.
+
+    Returns:
+        Union[str, None]: The file path of the downloaded MP3 file,
+        or None if the download fails.
+    """
     base, _ = os.path.splitext(output_path)  # Remove any existing extension
     ydl_opts = {
         "format": "bestaudio/best",
@@ -70,30 +91,3 @@ def download_track(
                 raise
 
     return None
-
-
-def add_metadata_to_track(file_path: str, track_info: dict, cover_path: str):
-    audiofile = eyed3.load(file_path)
-    assert audiofile is not None
-    assert audiofile.tag is not None
-
-    audiofile.tag.title = track_info["title"]
-    audiofile.tag.artist = track_info["artists"]
-    audiofile.tag.album = track_info["album"]
-    audiofile.tag.release_date = track_info["release_date"]
-    audiofile.tag.genre = track_info["genres"]
-
-    track_number_str = str(track_info["track_number"])
-    total_tracks_str = str(track_info["total_tracks"])
-
-    track_number = int(track_number_str) if track_number_str.isdigit() else 0
-    total_tracks = int(total_tracks_str) if total_tracks_str.isdigit() else 0
-
-    audiofile.tag.track_num = (track_number, total_tracks)
-
-    if cover_path and os.path.exists(cover_path):
-        with open(cover_path, "rb") as image_file:
-            imagedata = image_file.read()
-        audiofile.tag.images.set(3, imagedata, "image/jpeg", "cover")
-
-    audiofile.tag.save()
