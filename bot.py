@@ -7,6 +7,11 @@ from aiogram.filters import Command
 from config import TELEGRAM_BOT_TOKEN
 from utils.file_utils import create_zip_file, send_file_to_user
 from utils.message_utils import update_progress
+from utils.spotify.album_utils import (
+    get_album_id_by_url,
+    get_album_title,
+    get_album_tracks,
+)
 from utils.spotify.auth import get_auth_header, get_token
 from utils.spotify.playlist_utils import (
     get_playlist_id_by_url,
@@ -129,6 +134,70 @@ async def handle_spotify_playlist_url(message: types.Message) -> None:
     await send_file_to_user(message, zip_path, "document")
 
     progress_text = "Playlist was sent."
+    logger.info(progress_text)
+    await update_progress(
+        bot,
+        progress_text,
+        chat_id,
+        bot_message_id,
+    )
+
+
+@dp.message(F.text.startswith("https://open.spotify.com/album/"))
+async def handle_spotify_album_url(message: types.Message) -> None:
+    if message.from_user:
+        message_id = message.message_id
+        logger.info(f"Handling message with id: {message_id}")
+
+        logger.info(
+            f"Received album Spotify URL from {message.from_user.id}: {message.text}"  # noqa: E501
+        )
+
+    album_url = message.text.strip()  # type: ignore
+    token = get_token()
+    headers = get_auth_header(token)
+    album_id = get_album_id_by_url(album_url)
+    album_title = get_album_title(headers, album_id)
+    tracks_info = get_album_tracks(headers, album_id)
+    if len(tracks_info) == 0:
+        logger.warning("Tracks info is empty")
+        await message.answer("No tracks found in the album.")
+        return
+
+    # Directory to store downloaded tracks
+    tracks_dir = f"media/albums/{album_title}"
+    os.makedirs(tracks_dir, exist_ok=True)
+
+    bot_message = await message.answer("Starting to process tracks...")
+    bot_message_id = bot_message.message_id
+    chat_id = bot_message.chat.id
+    total_tracks = len(tracks_info)
+
+    for current, track_info in enumerate(tracks_info):
+        progress_text = f"Processing track {current + 1}/{total_tracks}: {track_info['artists']} - {track_info['title']}"  # noqa: E501
+        await update_progress(
+            bot,
+            progress_text,
+            chat_id,
+            bot_message_id,
+        )
+        process_track(track_info, tracks_dir)
+
+    await update_progress(
+        bot,
+        "Album was downloaded. Sending...",
+        chat_id,
+        bot_message_id,
+    )
+
+    # Create ZIP file
+    zip_path = f"media/albums/{album_title}.zip"
+    create_zip_file(tracks_dir, zip_path)
+
+    # Send ZIP file to the user
+    await send_file_to_user(message, zip_path, "document")
+
+    progress_text = "Album was sent."
     logger.info(progress_text)
     await update_progress(
         bot,
