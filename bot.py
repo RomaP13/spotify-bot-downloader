@@ -64,6 +64,9 @@ async def handle_spotify_track_url(message: types.Message) -> None:
 
     track_path = process_track(track_info, track_dir)
     if track_path:
+        # Indicate that the bot is sending a document
+        await bot.send_chat_action(chat_id, "upload_document")
+
         await send_file_to_user(message, track_path, "audio")
         progress_text = "Track was sent."
     else:
@@ -125,6 +128,9 @@ async def handle_spotify_playlist_url(message: types.Message) -> None:
         chat_id,
         bot_message_id,
     )
+
+    # Indicate that the bot is sending a document
+    await bot.send_chat_action(chat_id, "upload_document")
 
     # Create ZIP file
     zip_path = f"media/playlists/{playlist_title}.zip"
@@ -189,6 +195,9 @@ async def handle_spotify_album_url(message: types.Message) -> None:
         chat_id,
         bot_message_id,
     )
+
+    # Indicate that the bot is sending a document
+    await bot.send_chat_action(chat_id, "upload_document")
 
     # Create ZIP file
     zip_path = f"media/albums/{album_title}.zip"
