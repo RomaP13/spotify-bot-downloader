@@ -7,6 +7,27 @@ logger = logging.getLogger(__name__)
 
 
 def get_ngrok_url(timeout=30):
+    """
+    Retrieve the public URL of the ngrok tunnel.
+
+    This function attempts to fetch the public URL from the ngrok API
+    by polling the local ngrok instance running at
+    `http://localhost:4040/api/tunnels`.
+    If the URL is not available within the specified timeout period,
+    an exception is raised.
+
+    Args:
+        timeout (int): The maximum time (in seconds) to wait for ngrok to
+        start and provide a public URL.
+        Defaults to 30 seconds.
+
+    Returns:
+        str: The public URL of the ngrok tunnel.
+
+    Raises:
+        Exception: If ngrok does not start or provide a public URL
+        within the specified timeout.
+    """
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
