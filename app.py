@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import logging
 
 from aiogram import types
@@ -18,7 +19,9 @@ logger = logging.getLogger(__name__)
 processed_update_ids = set()
 
 
-async def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
     # Remove webhook if it exists
     delete_webhook_result = await bot.delete_webhook(drop_pending_updates=True)
     if delete_webhook_result:
@@ -34,13 +37,15 @@ async def on_startup():
     else:
         logger.info(f"Webhook URL is already set to {WEBHOOK_URL}")
 
+    yield
 
-async def on_shutdown():
+    # Shutdown logic
     await bot.session.close()
     logger.info("Bot session closed")
 
 
-app = FastAPI(on_startup=[on_startup], on_shutdown=[on_shutdown])
+# Initialize FastAPI app
+app = FastAPI(lifespan=lifespan)
 
 
 @app.post(WEBHOOK_PATH)
