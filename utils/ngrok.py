@@ -6,7 +6,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-def get_ngrok_url(timeout=30):
+def get_ngrok_url(timeout=30) -> str:
     """
     Retrieve the public URL of the ngrok tunnel.
 
