@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import logging
 
 from aiogram import types
@@ -5,8 +6,10 @@ from fastapi import FastAPI, Request
 import uvicorn
 
 from bot import bot, dp
-from config import NGROK_TUNNEL_URL, TELEGRAM_BOT_TOKEN
+from utils.ngrok import get_ngrok_url
+from config import TELEGRAM_BOT_TOKEN
 
+NGROK_TUNNEL_URL = get_ngrok_url()
 WEBHOOK_PATH = f"/bot/{TELEGRAM_BOT_TOKEN}"
 WEBHOOK_URL = f"{NGROK_TUNNEL_URL}{WEBHOOK_PATH}"
 
@@ -18,7 +21,9 @@ logger = logging.getLogger(__name__)
 processed_update_ids = set()
 
 
-async def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
     # Remove webhook if it exists
     delete_webhook_result = await bot.delete_webhook(drop_pending_updates=True)
     if delete_webhook_result:
@@ -34,13 +39,15 @@ async def on_startup():
     else:
         logger.info(f"Webhook URL is already set to {WEBHOOK_URL}")
 
+    yield
 
-async def on_shutdown():
+    # Shutdown logic
     await bot.session.close()
     logger.info("Bot session closed")
 
 
-app = FastAPI(on_startup=[on_startup], on_shutdown=[on_shutdown])
+# Initialize FastAPI app
+app = FastAPI(lifespan=lifespan)
 
 
 @app.post(WEBHOOK_PATH)
