@@ -2,6 +2,8 @@ import logging
 import os
 
 from aiogram import Bot, Dispatcher, F, types
+from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.client.telegram import TelegramAPIServer
 from aiogram.filters import Command
 
 from config import TELEGRAM_BOT_TOKEN
@@ -26,7 +28,12 @@ from utils.spotify.track_utils import (
 )
 from utils.track_processor import process_track
 
-bot = Bot(token=TELEGRAM_BOT_TOKEN)  # type: ignore
+# Initialize bot with custom session pointing
+# to the local telegram-bot-api server
+session = AiohttpSession(
+    api=TelegramAPIServer.from_base("http://localhost:8081")
+)
+bot = Bot(token=TELEGRAM_BOT_TOKEN, session=session)  # type: ignore
 dp = Dispatcher()
 
 # Set up logging
