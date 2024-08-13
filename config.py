@@ -19,6 +19,11 @@ assert (
     TELEGRAM_BOT_TOKEN is not None
 ), "TELEGRAM_BOT_TOKEN environment variable is not set"
 
+TELEGRAM_API_BASE_URL = os.getenv("TELEGRAM_API_BASE_URL")
+assert (
+    TELEGRAM_API_BASE_URL is not None
+), "TELEGRAM_API_BASE_URL environment variable is not set"
+
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 assert (
     YOUTUBE_API_KEY is not None

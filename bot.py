@@ -6,7 +6,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.telegram import TelegramAPIServer
 from aiogram.filters import Command
 
-from config import TELEGRAM_BOT_TOKEN
+from config import TELEGRAM_API_BASE_URL, TELEGRAM_BOT_TOKEN
 from utils.file_utils import create_zip_file, send_file_to_user
 from utils.message_utils import update_progress
 from utils.spotify.album_utils import (
@@ -26,19 +26,23 @@ from utils.spotify.track_utils import (
     get_track_id_by_url,
     get_track_info,
 )
+from utils.telegram_api_bot_server import check_telegram_bot_api_server
 from utils.track_processor import process_track
 
-# Initialize bot with custom session pointing
-# to the local telegram-bot-api server
-session = AiohttpSession(
-    api=TelegramAPIServer.from_base("http://localhost:8081")
-)
-bot = Bot(token=TELEGRAM_BOT_TOKEN, session=session)  # type: ignore
-dp = Dispatcher()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+# Initialize bot with custom session pointing
+# to the local telegram-bot-api server
+if check_telegram_bot_api_server(TELEGRAM_API_BASE_URL, TELEGRAM_BOT_TOKEN):  # type: ignore
+    session = AiohttpSession(
+        api=TelegramAPIServer.from_base(TELEGRAM_API_BASE_URL)  # type: ignore
+    )
+bot = Bot(token=TELEGRAM_BOT_TOKEN, session=session)  # type: ignore
+dp = Dispatcher()
 
 
 @dp.message(Command("start"))
