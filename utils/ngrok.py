@@ -36,6 +36,7 @@ def get_ngrok_url(timeout=30) -> str:
                 data = response.json()
                 public_url = data.get("tunnels", [{}])[0].get("public_url")
                 if public_url:
+                    logger.info("Ngrok is up and running.")
                     return public_url
         except requests.exceptions.ConnectionError:
             logger.info("Waiting for ngrok to start...")
