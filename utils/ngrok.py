@@ -6,7 +6,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-def get_ngrok_url(timeout=30):
+def get_ngrok_url(timeout=30) -> str:
     """
     Retrieve the public URL of the ngrok tunnel.
 
@@ -36,6 +36,7 @@ def get_ngrok_url(timeout=30):
                 data = response.json()
                 public_url = data.get("tunnels", [{}])[0].get("public_url")
                 if public_url:
+                    logger.info("Ngrok is up and running.")
                     return public_url
         except requests.exceptions.ConnectionError:
             logger.info("Waiting for ngrok to start...")

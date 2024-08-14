@@ -6,17 +6,18 @@ from fastapi import FastAPI, Request
 import uvicorn
 
 from bot import bot, dp
-from utils.ngrok import get_ngrok_url
 from config import TELEGRAM_BOT_TOKEN
+from utils.ngrok import get_ngrok_url
 
-NGROK_TUNNEL_URL = get_ngrok_url()
-WEBHOOK_PATH = f"/bot/{TELEGRAM_BOT_TOKEN}"
-WEBHOOK_URL = f"{NGROK_TUNNEL_URL}{WEBHOOK_PATH}"
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+NGROK_TUNNEL_URL = get_ngrok_url()
+WEBHOOK_PATH = f"/bot/{TELEGRAM_BOT_TOKEN}"
+WEBHOOK_URL = f"{NGROK_TUNNEL_URL}{WEBHOOK_PATH}"
 # Set to store processed update_ids
 processed_update_ids = set()
 
