@@ -3,6 +3,9 @@ FROM python:3.10-slim
 # Set the working directory in the container
 WORKDIR /app
 
+# Install ffmpeg for converting tracks
+RUN apt-get update && apt-get install -y ffmpeg
+
 # Copy the Pipfile and Pipfile.lock to the container
 COPY Pipfile Pipfile.lock /app/
 
