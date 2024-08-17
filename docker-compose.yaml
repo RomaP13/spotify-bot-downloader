@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+
   telegram-bot-api:
     image: aiogram/telegram-bot-api:latest
     environment:
@@ -13,10 +14,22 @@ services:
       - telegram-bot-api-data:/var/lib/telegram-bot-api
     ports:
       - "8081:8081"
+
+  ngrok:
+    image: wernight/ngrok
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    env_file:
+      - .env
+    command: ngrok http telegram-bot:8000
+    ports:
+      - "4040:4040"
+
   telegram-bot:
     build: .
     depends_on:
       - telegram-bot-api
+      - ngrok
     command: >
       sh -c "pipenv run uvicorn app:app --host 0.0.0.0 --port 8000"
     ports:
