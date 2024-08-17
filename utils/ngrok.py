@@ -31,7 +31,7 @@ def get_ngrok_url(timeout=30) -> str:
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
-            response = requests.get("http://localhost:4040/api/tunnels")
+            response = requests.get("http://ngrok:4040/api/tunnels")
             if response.status_code == 200:
                 data = response.json()
                 public_url = data.get("tunnels", [{}])[0].get("public_url")
