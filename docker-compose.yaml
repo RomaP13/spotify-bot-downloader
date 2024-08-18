@@ -1,3 +1,8 @@
+# This Docker Compose file runs the full setup, including the local
+# Telegram Bot API server. It is suitable when you want to send large files
+# through your bot using a local instance of the Telegram Bot API server.
+# Ensure you set your TELEGRAM_API_ID and TELEGRAM_API_HASH in .env file.
+
 version: "3.8"
 
 services:
