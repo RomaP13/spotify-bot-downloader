@@ -6,24 +6,31 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-def check_telegram_bot_api_server(url: str, token: str, timeout=30) -> bool:
+def check_telegram_bot_api_server(
+    url: str | None, token: str, timeout=30
+) -> bool:
     """
     Check if the Telegram Bot API server is running and accessible.
 
     Args:
-        url (str): The base URL of the Telegram Bot API server.
+        url (str | None): The base URL of the Telegram Bot API server.
+            If None, the function returns False.
         token (str): The bot token required to authenticate the request.
         timeout (int): The maximum time (in seconds) to wait for the
-        server to start. Defaults to 30 seconds.
+            server to start. Defaults to 30 seconds.
 
     Returns:
         bool: True if the server is up and running;
-        otherwise, it raises an exception.
+            False, if the URL is None,
+            otherwise, it raises an exception.
 
     Raises:
         Exception: If the Telegram Bot API server does not start within
-        the specified timeout.
+            the specified timeout.
     """
+    if url is None:
+        return False
+
     start_time = time.time()
     api_url = f"{url}/bot{token}/getMe"
     while time.time() - start_time < timeout:

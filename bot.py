@@ -35,13 +35,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Initialize bot with custom session pointing
-# to the local telegram-bot-api server
-if check_telegram_bot_api_server(TELEGRAM_API_BASE_URL, TELEGRAM_BOT_TOKEN):  # type: ignore
+if check_telegram_bot_api_server(
+    TELEGRAM_API_BASE_URL, TELEGRAM_BOT_TOKEN  # type: ignore
+):
     session = AiohttpSession(
         api=TelegramAPIServer.from_base(TELEGRAM_API_BASE_URL)  # type: ignore
     )
-bot = Bot(token=TELEGRAM_BOT_TOKEN, session=session)  # type: ignore
+
+    # Initialize bot with custom session pointing
+    # to the local telegram-bot-api server
+    bot = Bot(token=TELEGRAM_BOT_TOKEN, session=session)  # type: ignore
+else:
+    bot = Bot(token=TELEGRAM_BOT_TOKEN)  # type: ignore
+
 dp = Dispatcher()
 
 
