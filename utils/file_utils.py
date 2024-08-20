@@ -1,7 +1,11 @@
+import logging
 import os
 import zipfile
 
 from aiogram import types
+from aiogram.exceptions import TelegramAPIError
+
+logger = logging.getLogger(__name__)
 
 
 def create_zip_file(directory: str, zip_path: str) -> None:
@@ -35,11 +39,25 @@ async def send_file_to_user(
     Raises:
         ValueError: If the file_type is not 'audio' or 'document'.
     """
-    if file_type == "audio":
-        file = types.FSInputFile(file_path)
-        await message.answer_audio(file)
-    elif file_type == "document":
-        file = types.FSInputFile(file_path)
-        await message.answer_document(file)
-    else:
-        raise ValueError("Unsupported file type. Use 'audio' or 'document'.")
+    try:
+        if file_type == "audio":
+            file = types.FSInputFile(file_path)
+            await message.answer_audio(file)
+        elif file_type == "document":
+            file = types.FSInputFile(file_path)
+            await message.answer_document(file)
+        else:
+            raise ValueError(
+                "Unsupported file type. Use 'audio' or 'document'."
+            )
+    # Handling error if file is too big
+    except TelegramAPIError as e:
+        logger.error(f"Telegram API error on attempt: {e}")
+        await message.reply(
+            "An unexpected error occurred. Please try again later."
+        )
+    except BaseException as e:
+        logger.error(f"Unexpected error on attempt: {e}")
+        await message.reply(
+            f"An unexpected error occurred. Please try again later."
+        )
