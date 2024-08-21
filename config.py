@@ -21,7 +21,7 @@ assert (
 
 TELEGRAM_API_BASE_URL = os.getenv("TELEGRAM_API_BASE_URL")
 
-if TELEGRAM_API_BASE_URL is None:
+if TELEGRAM_API_BASE_URL is not None:
     TELEGRAM_API_ID = os.getenv("TELEGRAM_API_ID")
     assert (
         TELEGRAM_API_ID is not None
