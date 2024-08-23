@@ -1,0 +1,44 @@
+# This Docker Compose file runs the full setup, including the local
+# Telegram Bot API server. It is suitable when you want to send large files
+# through your bot using a local instance of the Telegram Bot API server.
+# Ensure you set your TELEGRAM_API_ID and TELEGRAM_API_HASH in .env file.
+
+version: "3.8"
+
+services:
+
+  telegram-bot-api:
+    image: aiogram/telegram-bot-api:latest
+    environment:
+      TELEGRAM_API_ID: ${TELEGRAM_API_ID}
+      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
+      TELEGRAM_LOCAL: true
+    env_file:
+      - .env
+    volumes:
+      - telegram-bot-api-data:/var/lib/telegram-bot-api
+    ports:
+      - "8081:8081"
+
+  ngrok:
+    image: wernight/ngrok
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    env_file:
+      - .env
+    command: ngrok http telegram-bot:8000
+    ports:
+      - "4040:4040"
+
+  telegram-bot:
+    build: .
+    depends_on:
+      - telegram-bot-api
+      - ngrok
+    command: >
+      sh -c "pipenv run uvicorn app:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+
+volumes:
+  telegram-bot-api-data:
